@@ -1,9 +1,21 @@
+import './costanti.js'
+
 const express = require('express');
 const cors = require('cors');
+const mysql = require('mysql')
 const bodyParser = require('body-parser')
 const app = express();
 const port = 3005;
+const conn = mysql.createConnection({
+    host: HOST,
+    user: USER,
+    password: USER,
+    database: NOME_DB
+})
 
+
+
+conn.connect()
 app.use(cors({
     origin: '*' //'http://localhost:XXXX' indirizzo flutter
 }));
@@ -16,12 +28,35 @@ app.get('/',(req,res) => {
     res.json({messaggio:'ciao'});
 })
 
-app.get('/check-login',(req,res) => {
-    //TODO query al db
-    //controlla che esistano nome e pwd
-    //TODO fare una post 
-    console.log("GET check-login")
-    res.status(200).json({isUser:'true'});
+app.post('/check-login',(req,res) => {
+    var body = req.body
+
+    try{
+        conn.query('SELECT * FROM utenti WHERE username = "' + body.user + '"', (err, rows, fields) => {
+            //if (err) throw err
+            if (err){
+                res.json({ isUser: 'false' })
+            } else {
+                if(rows.length >= 1){
+                    if(body.password == rows[0].password){
+                        res.json({ isUser: 'true' })
+                    } else {
+                        res.json({ isUser: 'false' })
+                    }
+                } else {
+                    res.json({ isUser: 'false' })
+                }
+                
+            }
+            
+        })
+    } catch(errore) {
+        res.json ({isUser:'false', debug:errore})
+    }
+    
+    console.log("POST check-login")
+    res.status(200);
+    
 })
 
 app.post('/prova-post', (req, res) => {
